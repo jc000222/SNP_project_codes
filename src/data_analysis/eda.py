@@ -3,15 +3,20 @@ import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf
 from statsmodels.tsa.seasonal import seasonal_decompose
 import pandas as pd
-import numpy as np
 
 class EDARunner:
+    """
+    Perform EDA for different datafram from data generation step.
+    """
+
     def __init__(self, df, data_name, Show_info=True):
         """
         Initialize EDARunner class with the input DataFrame.
 
         Args:
         - df (DataFrame): Input DataFrame for analysis.
+        - data_name (str): The name of the dataset.
+        - Show_info (Boolean): Default as True. Show the info of df.
         """
         df["Timestamp"] = pd.to_datetime(df["Timestamp"])
         self.df = df
@@ -38,16 +43,22 @@ class EDARunner:
 
 
     def histogram(self):
+        '''
+        Plots a histogram of the values in the DataFrame.
+        '''
         plt.figure(figsize=(5, 3))
-        sns.histplot(df['Values'], bins=50, kde=True)
-        plt.title('Histogram of Valuess')
+        sns.histplot(self.df['Values'], bins=50, kde=True)
+        plt.title('Histogram of Values')
         plt.xlabel('Values')
         plt.ylabel('Frequency')
         plt.show()
         
     def boxplot(self):
+        '''
+        Plots a boxplot of the values in the DataFrame.
+        '''
         plt.figure(figsize=(5, 3))
-        sns.boxplot(df['Values'])
+        sns.boxplot(self.df['Values'])
         plt.show()
 
     def autocorrelation(self):
@@ -76,44 +87,42 @@ class EDARunner:
         plt.show()
     
     def overview(self, Zoom_in=None):
-            '''
-            Plots an overview of the synthetic time series.
+        '''
+        Plots an overview of the synthetic time series.
 
-            Parameters:
-            - Zoom_in: tuple (start_index, end_index) to specify the range of data points to zoom in on. If None, plots the entire series.
+        Parameters:
+        - Zoom_in: tuple (start_index, end_index) to specify the range of data points to zoom in on. If None, plots the entire series.
             
-            Returns:
-            None. Displays the overview plot.
-            '''
-            # Plot the synthetic time series
-            plt.figure(figsize=(10, 6))
-            
-            if Zoom_in:
-                plt.plot(self.df['Timestamp'][Zoom_in[0]:Zoom_in[1]], self.df['Values'][Zoom_in[0]:Zoom_in[1]], label="Synthetic Time Series")
-            else:
-                plt.plot(self.df['Timestamp'], self.df['Values'], label="Synthetic Time Series")
-            
-            plt.xlabel("Timestamp")
-            plt.ylabel("Values")
-            plt.title(self.data_name)
-            plt.legend()
-            plt.grid(True)
-            plt.show()
+        Returns:
+        None. Displays the overview plot.
+        '''
+        # Plot the synthetic time series
+        plt.figure(figsize=(10, 6))
+        
+        if Zoom_in:
+            plt.plot(self.df['Timestamp'][Zoom_in[0]:Zoom_in[1]], self.df['Values'][Zoom_in[0]:Zoom_in[1]], label="Synthetic Time Series")
+        else:
+            plt.plot(self.df['Timestamp'], self.df['Values'], label="Synthetic Time Series")
+        
+        plt.xlabel("Timestamp")
+        plt.ylabel("Values")
+        plt.title(self.data_name)
+        plt.legend()
+        plt.grid(True)
+        plt.show()
 
     def plot_decomposition(self):
         '''
         Plots the individual components and the combined series of a time series decomposition.
 
         Parameters:
-        - df: pandas DataFrame containing the time series data with a column "Values"
-        - colors: list of colors to use for the plots
-        - data_name: title of the plot representing the name of the dataset
+        None
         
         Returns:
         None. Displays the decomposition plot.
         '''
         # Decompose the time series data into its components: observed, trend, seasonal, and residual
-        decomposition = seasonal_decompose(df["Values"], model='additive', period=365)
+        decomposition = seasonal_decompose(self.df["Values"], model='additive', period=365)
 
         # Create a figure with 4 subplots, one for each component
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(15, 12))

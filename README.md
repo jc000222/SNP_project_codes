@@ -13,6 +13,7 @@ To install the package from the GitHub repository, use the following command:
 
 ```bash
 pip install --upgrade git+https://github.com/jc000222/SNP_project_codes.git
+```
 
 # Functions
 ### __init__(self, df, data_name, Show_info=True)

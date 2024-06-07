@@ -11,13 +11,14 @@ class EDARunner:
 
     def __init__(self, df, data_name, Show_info=True):
         """
-        Initialize EDARunner class with the input DataFrame.
+        Initialize EDARunner class with the input DataFrame. Make columns to "Timestamp", "Values".
 
         Args:
         - df (DataFrame): Input DataFrame for analysis.
         - data_name (str): The name of the dataset.
         - Show_info (Boolean): Default as True. Show the info of df.
         """
+        df.columns = ["Timestamp", "Values"]
         df["Timestamp"] = pd.to_datetime(df["Timestamp"])
         self.df = df
         self.data_name = data_name

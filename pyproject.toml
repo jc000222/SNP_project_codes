@@ -8,13 +8,12 @@ authors = [
     {name = "Ruoyu Chen", email = "rchen2@mail.yu.edu"},
     {name = "Zhengnan Li", email = "zli6@mail.yu.edu"},
     {name = "Niranjan Kumar Kishore Kumar", email = "nkishore@mail.yu.edu"},
-    {name = "more2update", email = "more2update"}
-
+    {name = "more2update", email = "more2update@example.com"}  # Replace with a valid email address
 ]
 maintainers = [
     {name = "Ruoyu Chen", email = "rchen2@mail.yu.edu"},
     {name = "Zhengnan Li", email = "zli6@mail.yu.edu"},
-    {name = "more2update", email = "more2update"}
+    {name = "more2update", email = "more2update@example.com"}  # Replace with a valid email address
 ]
 description = "Codes for S&P project"
 readme = "README.md"
@@ -26,13 +25,12 @@ dependencies = [
     "numpy>=1.20",
     "pandas>=1.4",
     "seaborn>=0.13.0",
-    "STATSMODELS"
+    "statsmodels"
 ]
-version="0.1"
+version = "0.1"
 
 [project.urls]
 Repository = "https://github.com/Zhengnan817/Final-Project-Carbon-emission"
-
 
 [tool.setuptools.packages.find]
 where = ["src"]

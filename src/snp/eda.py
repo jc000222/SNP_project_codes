@@ -1,3 +1,7 @@
+"""
+eda.py contains a EDARunner class to perform EDA.
+"""
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf

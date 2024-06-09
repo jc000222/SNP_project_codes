@@ -7,8 +7,13 @@ import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf
 from statsmodels.tsa.stattools import pacf
 from statsmodels.tsa.seasonal import seasonal_decompose
+import matplotlib.dates as mdates
+from datetime import datetime
 import pandas as pd
 import numpy as np
+import warnings
+# Suppress specific warning from Matplotlib
+warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
 class EDARunner:
     """
@@ -118,13 +123,17 @@ class EDARunner:
             print(f'Plot saved as {file}')
         plt.show()
     
-    def overview(self, save_plot=False, Zoom_in=None, file_path=None,color=None):
+
+    def overview(self, save_plot=False, Zoom_in=None, file_path=None, color=None):
         '''
         Plots an overview of the synthetic time series.
 
         Parameters:
+        - save_plot: bool, if True, saves the plot to the specified file path.
         - Zoom_in: tuple (start_index, end_index) to specify the range of data points to zoom in on. If None, plots the entire series.
-            
+        - file_path: str, the directory path where the plot should be saved.
+        - color: str, the color of the plot line.
+
         Returns:
         None. Displays the overview plot.
         '''
@@ -132,9 +141,9 @@ class EDARunner:
         plt.figure(figsize=(10, 6))
         
         if Zoom_in:
-            plt.plot(self.df['Timestamp'][Zoom_in[0]:Zoom_in[1]], self.df['Values'][Zoom_in[0]:Zoom_in[1]], label="Synthetic Time Series",color=color)
+            plt.plot(self.df['Timestamp'][Zoom_in[0]:Zoom_in[1]], self.df['Values'][Zoom_in[0]:Zoom_in[1]], label="Synthetic Time Series", color=color)
         else:
-            plt.plot(self.df['Timestamp'], self.df['Values'], label="Synthetic Time Series",color=color)
+            plt.plot(self.df['Timestamp'], self.df['Values'], label="Synthetic Time Series", color=color)
         
         plt.xlabel("Timestamp")
         plt.ylabel("Values")
@@ -142,17 +151,25 @@ class EDARunner:
         plt.legend()
         plt.grid(True)
         
+        # Define date formatting
+        date_format = mdates.DateFormatter('%m/%d/%y')
+        
+        # Set x-axis date format
+        plt.gca().xaxis.set_major_formatter(date_format)
+        plt.xticks(rotation=45)
+        
         if save_plot:
-            if file_path == None:
+            if file_path is None:
                 file_path = self.default_file_path
             os.makedirs(file_path, exist_ok=True)
             if Zoom_in:
-                file = file_path + f"/overview_{self.data_name}{Zoom_in[0]}{Zoom_in[1]}.png"
+                file = os.path.join(file_path, f"overview_{self.data_name}_{Zoom_in[0]}_{Zoom_in[1]}.png")
             else:
-                file = file_path + f"/overview_{self.data_name}.png"
+                file = os.path.join(file_path, f"overview_{self.data_name}.png")
             plt.savefig(file)
             print(f'Plot saved as {file}')
         plt.show()
+
 
     def plot_decomposition(self, save_plot=False, file_path=None):
         '''
@@ -198,15 +215,29 @@ class EDARunner:
             print(f'Plot saved as {file}')
         plt.show()
 
+
+
+
 class MultiEDARunner:
-    def __init__(self, df,data_name, Show_info=True):
+    def __init__(self, df,data_name, Show_info=True, colormap=None):
         self.df=df
     
         self.data_name = data_name
         self.default_file_path = f'/EDA_Result/{data_name}'
+        # List of colormaps to randomly select from
+        colormaps = [
+            plt.cm.Blues, plt.cm.Greens, plt.cm.Reds, plt.cm.Purples, plt.cm.Oranges, 
+            plt.cm.BuPu, plt.cm.copper, plt.cm.YlGnBu,
+            plt.cm.YlOrBr, plt.cm.OrRd, plt.cm.PuBu, plt.cm.GnBu]
+
+        # Randomly select one colormap for this instance
+        self.selected_colormap = colormap if colormap else np.random.choice(colormaps)
+        
+
         if Show_info:
+            print("Columns:",df.columns)
             display(df.head())
-    def pacf_threshold(self, nlags=40, threshold=0.5, color=None, save_plot=False, file_path=None):
+    def pacf_threshold(self, nlags=40, threshold=0.5, save_plot=False, file_path=None):
         """
         Plots the lag at which the PACF drops below a specified threshold for each column in the DataFrame.
 
@@ -232,7 +263,7 @@ class MultiEDARunner:
 
         # Plotting
         plt.figure(figsize=(15, 5))
-        plt.bar(column_labels, lag_below_threshold.values(), color=color)
+        plt.bar(column_labels, lag_below_threshold.values(), color=self.selected_colormap(0.8))
         plt.xlabel('Column Name')
         plt.ylabel(f'Lag where PACF drops below {threshold}')
         plt.title(f'Lag at which PACF drops below {threshold} for each column')
@@ -247,6 +278,7 @@ class MultiEDARunner:
             print(f'Plot saved as {file}')
 
         plt.show()
+
     def visualize_variance_std_dev(self):
         """
         Computes, prints, and visualizes the variance and standard deviation for each column in the DataFrame.
@@ -300,7 +332,9 @@ class MultiEDARunner:
 
         plt.show()
 
-    def overview(self, save_plot=False, Zoom_in=None, file_path=None, color=None, columns=None):
+
+
+    def overview(self, save_plot=False, Zoom_in=None, file_path=None, columns=None):
         '''
         Plots an overview of the synthetic time series for each column in the DataFrame.
 
@@ -308,8 +342,7 @@ class MultiEDARunner:
         - Zoom_in: tuple (start_index, end_index) to specify the range of data points to zoom in on. If None, plots the entire series.
         - save_plot: bool, if True, saves the plot to the specified file path.
         - file_path: str, the directory path where the plot should be saved.
-        - color: str, the base color of the plot lines.
-        - show_plot: bool, if True, displays the plot.
+        - columns: list of str, columns to be plotted. If None, all columns except Timestamp are plotted.
 
         Returns:
         None. Displays or saves the overview plot.
@@ -317,33 +350,38 @@ class MultiEDARunner:
         if columns is None:
             columns = self.df.columns[1:]  # Exclude Timestamp column
         else:
-            columns = self.df.columns[columns[0]:columns[1]+1]
+            columns = pd.Index(columns)
         num_columns = len(columns)
         
-        # Determine the number of rows needed, 3 subplots per row
-        num_rows = (num_columns + 2) // 3
-        
-        fig, axs = plt.subplots(num_rows, 3, figsize=(18, 3 * num_rows), sharey=True, constrained_layout=True)
+        # Determine the number of rows needed, 4 subplots per row
+        num_rows = (num_columns + 3) // 4
+
+        fig, axs = plt.subplots(num_rows, 4, figsize=(18, 3 * num_rows), sharey=True, constrained_layout=True)
         axs = axs.flatten()  # Flatten in case we have a single row to make indexing easier
+        fig.suptitle(self.data_name)
 
         if file_path is None:
             file_path = self.default_file_path
         os.makedirs(file_path, exist_ok=True)
 
-        # Using a colormap for progressively darker colors
-        colormap = plt.cm.copper
-        colors = [colormap(1 - i / num_columns) for i in range(num_columns)]
-
-
+        # Using the selected colormap for progressively darker colors
+        colormap = self.selected_colormap
+        colors = [colormap(i / (num_columns+4)) for i in range(4,num_columns+4)]
         for i, column in enumerate(columns):
             plot_color = colors[i]
             if Zoom_in:
+                fig.suptitle(self.data_name + f" | Zoomed {Zoom_in}")
                 axs[i].plot(self.df['Timestamp'][Zoom_in[0]:Zoom_in[1]], self.df[column][Zoom_in[0]:Zoom_in[1]], label=column, color=plot_color)
             else:
                 axs[i].plot(self.df['Timestamp'], self.df[column], label=column, color=plot_color)
             
-            axs[i].set_title(self.data_name + " " + column[6:])
+            axs[i].set_title("std: " + column[6:].replace('p', '.'))
             axs[i].grid(True)
+
+            # Define date formatting
+            date_format = mdates.DateFormatter('%m/%d/%y')
+            axs[i].xaxis.set_major_formatter(date_format)
+            axs[i].tick_params(axis='x', rotation=45)
 
         plt.tight_layout()
 

@@ -12,14 +12,13 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import warnings
-# Suppress specific warning from Matplotlib
-warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
+
 
 class EDARunner:
     """
     Perform EDA for different datafram from data generation step.
     """
-
+    
     def __init__(self, df, data_name, Show_info=True):
         """
         Initialize EDARunner class with the input DataFrame. Make columns to "Timestamp", "Values".
@@ -53,6 +52,8 @@ class EDARunner:
 
             print("Time Period:", time_period)
             print("Frequency:", frequency)
+        # Suppress specific warning from Matplotlib
+        warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
 
     def histogram(self, save_plot=False, file_path=None, color=None):
@@ -145,10 +146,7 @@ class EDARunner:
         else:
             plt.plot(self.df['Timestamp'], self.df['Values'], label="Synthetic Time Series", color=color)
         
-        plt.xlabel("Timestamp")
-        plt.ylabel("Values")
         plt.title(self.data_name)
-        plt.legend()
         plt.grid(True)
         
         # Define date formatting
@@ -227,7 +225,7 @@ class MultiEDARunner:
         # List of colormaps to randomly select from
         colormaps = [
             plt.cm.Blues, plt.cm.Greens, plt.cm.Reds, plt.cm.Purples, plt.cm.Oranges, 
-            plt.cm.BuPu, plt.cm.copper, plt.cm.YlGnBu,
+            plt.cm.BuPu, plt.cm.YlGnBu,
             plt.cm.YlOrBr, plt.cm.OrRd, plt.cm.PuBu, plt.cm.GnBu]
 
         # Randomly select one colormap for this instance
@@ -237,6 +235,9 @@ class MultiEDARunner:
         if Show_info:
             print("Columns:",df.columns)
             display(df.head())
+        # Suppress specific warning from Matplotlib
+        warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
+
     def pacf_threshold(self, nlags=40, threshold=0.5, save_plot=False, file_path=None):
         """
         Plots the lag at which the PACF drops below a specified threshold for each column in the DataFrame.
@@ -262,7 +263,7 @@ class MultiEDARunner:
         column_labels = [col.split(' ')[1] for col in lag_below_threshold.keys()]
 
         # Plotting
-        plt.figure(figsize=(15, 5))
+        plt.figure(figsize=(18, 3))
         plt.bar(column_labels, lag_below_threshold.values(), color=self.selected_colormap(0.8))
         plt.xlabel('Column Name')
         plt.ylabel(f'Lag where PACF drops below {threshold}')
@@ -297,14 +298,14 @@ class MultiEDARunner:
         for column in self.df.columns[1:]:
             variance = np.var(self.df[column])
             std_dev = np.std(self.df[column])
-            names.append(column)
+            names.append(column[6:].replace('p', '.'))
             variances.append(variance)
             std_devs.append(std_dev)
         # Visualizing the data
         x = np.arange(len(names))  # the label locations
         width = 0.35  # the width of the bars
 
-        fig, ax = plt.subplots(figsize=(14, 7))
+        fig, ax = plt.subplots(figsize=(18, 5))
         rects1 = ax.bar(x - width/2, variances, width, label='Variance')
         rects2 = ax.bar(x + width/2, std_devs, width, label='Standard Deviation')
 
@@ -312,7 +313,7 @@ class MultiEDARunner:
         ax.set_ylabel('Values')
         ax.set_title('Variance and Standard Deviation by Dataset')
         ax.set_xticks(x)
-        ax.set_xticklabels(names, rotation=45, ha='right')
+        ax.set_xticklabels(names, rotation=30, ha='right')
         ax.legend()
 
         # Attach a text label above each bar in *rects*, displaying its height.

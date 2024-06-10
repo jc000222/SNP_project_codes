@@ -265,7 +265,6 @@ class MultiEDARunner:
         # Plotting
         plt.figure(figsize=(18, 3))
         plt.bar(column_labels, lag_below_threshold.values(), color=self.selected_colormap(0.8))
-        plt.xlabel('Column Name')
         plt.ylabel(f'Lag where PACF drops below {threshold}')
         plt.title(f'Lag at which PACF drops below {threshold} for each column')
         plt.xticks(rotation=90)

@@ -260,7 +260,7 @@ class MultiEDARunner:
             lag_below_threshold[column] = lag
 
         # Extract the relevant parts of the column names
-        column_labels = [col.split(' ')[1] for col in lag_below_threshold.keys()]
+        column_labels = [col[3:].replace('p', '.') for col in lag_below_threshold.keys()]
 
         # Plotting
         plt.figure(figsize=(18, 3))
@@ -298,7 +298,7 @@ class MultiEDARunner:
         for column in self.df.columns[1:]:
             variance = np.var(self.df[column])
             std_dev = np.std(self.df[column])
-            names.append(column[6:].replace('p', '.'))
+            names.append(column[3:].replace('p', '.'))
             variances.append(variance)
             std_devs.append(std_dev)
         # Visualizing the data
@@ -376,7 +376,7 @@ class MultiEDARunner:
             else:
                 axs[i].plot(self.df['Timestamp'], self.df[column], label=column, color=plot_color)
             
-            axs[i].set_title("std: " + column[6:].replace('p', '.'))
+            axs[i].set_title("std: " + column[3:].replace('p', '.'))
             axs[i].grid(True)
 
             # Define date formatting

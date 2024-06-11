@@ -46,3 +46,26 @@ Returns: None. Displays the overview plot.
 Plots the individual components and the combined series of a time series decomposition.
 
 Returns: None. Displays the decomposition plot.
+
+# Installation and Update Instructions
+### Installing the Package
+
+To install your package from a GitHub repository, use the following command:
+
+pip install git+https://github.com/jc000222/SNP_project_codes.git
+
+This command fetches the latest version of the package from the repository and installs it.
+
+### Updating the Package
+
+To update the package to the latest version from the repository, you can use the --upgrade flag:
+
+pip install --upgrade git+https://github.com/jc000222/SNP_project_codes.git
+
+### Restarting the Environment
+
+After installing or updating a package, it's often necessary to restart the Python environment to ensure that the changes take effect. This can be particularly important in environments like Jupyter notebooks. If update is not working, try:
+pip uninstall snp
+and try install again.
+
+

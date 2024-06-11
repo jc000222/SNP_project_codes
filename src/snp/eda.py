@@ -64,7 +64,7 @@ class EDARunner:
         '''
         plt.figure(figsize=(5, 3))
         sns.histplot(self.df[self.col_names[1]], bins=50, kde=True, color=color)
-        plt.title(f'Histogram of {self.col_names[1]s} for {self.data_name}')
+        plt.title(f'Histogram of {self.col_names[1]}s for {self.data_name}')
         plt.xlabel(f'{self.col_names[1]}s')
         plt.ylabel('Frequency')
 
@@ -83,7 +83,7 @@ class EDARunner:
         '''
         plt.figure(figsize=(5, 3))
         sns.boxplot(self.df[self.col_names[1]],color=color)
-        plt.title(f'Box Plot of {self.col_names[1]s} for {self.data_name}')
+        plt.title(f'Box Plot of {self.col_names[1]}s for {self.data_name}')
         
         if save_plot:
             if file_path == None:

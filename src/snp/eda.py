@@ -219,6 +219,102 @@ class EDARunner:
             print(f'Plot saved as {file}')
         plt.show()
 
+def pacf_threshold(self, nlags=40, threshold=0.5, save_plot=False, file_path=None):
+        """
+        Plots the lag at which the PACF drops below a specified threshold for each column in the DataFrame.
+
+        Parameters:
+        nlags (int): The number of lags to calculate the PACF for. Default is 40.
+        threshold (float): The threshold for PACF. Default is 0.5.
+        color (str): The color of the bars in the plot. Default is None.
+
+        Returns:
+        None. Displays the bar plot.
+        """
+        lag_below_threshold = {}
+
+        # Calculate the PACF for each column except the Timestamp
+        for column in self.df.columns[1:]:
+            pacf_values = pacf(self.df[column], nlags=nlags)
+            # Find the first lag where PACF drops below the threshold
+            lag = next((i for i, value in enumerate(pacf_values) if abs(value) < threshold), None)
+            lag_below_threshold[column] = lag
+
+        # Extract the relevant parts of the column names
+        column_labels = [col[3:].replace('p', '.') for col in lag_below_threshold.keys()]
+
+        # Plotting
+        plt.figure(figsize=(18, 3))
+        plt.bar(column_labels, lag_below_threshold.values(), color=self.selected_colormap(0.8))
+        plt.ylabel(f'Lag where PACF drops below {threshold}')
+        plt.title(f'Lag at which PACF drops below {threshold} for each column')
+        plt.xticks(rotation=90)
+        plt.grid(True)
+        if save_plot:
+            if file_path == None:
+                file_path = self.default_file_path
+            os.makedirs(file_path, exist_ok=True)
+            file = file_path + f"/pacf_{self.data_name}.png"
+            plt.savefig(file)
+            print(f'Plot saved as {file}')
+
+        plt.show()
+
+    def visualize_variance_std_dev(self):
+        """
+        Computes, prints, and visualizes the variance and standard deviation for each column in the DataFrame.
+
+        Parameters:
+        None
+
+        Returns:
+        None. Displays the bar plots.
+        """
+        names = []
+        variances = []
+        std_devs = []
+
+        # Collecting data
+        for column in self.df.columns[1:]:
+            variance = np.var(self.df[column])
+            std_dev = np.std(self.df[column])
+            names.append(column[3:].replace('p', '.'))
+            variances.append(variance)
+            std_devs.append(std_dev)
+        # Visualizing the data
+        x = np.arange(len(names))  # the label locations
+        width = 0.35  # the width of the bars
+
+        fig, ax = plt.subplots(figsize=(18, 5))
+        rects1 = ax.bar(x - width/2, variances, width, label='Variance')
+        rects2 = ax.bar(x + width/2, std_devs, width, label='Standard Deviation')
+
+        # Add some text for labels, title and custom x-axis tick labels, etc.
+        ax.set_ylabel('Values')
+        ax.set_title('Variance and Standard Deviation by Dataset')
+        ax.set_xticks(x)
+        ax.set_xticklabels(names, rotation=30, ha='right')
+        ax.legend()
+
+        # Attach a text label above each bar in *rects*, displaying its height.
+        def autolabel(rects):
+            for rect in rects:
+                height = rect.get_height()
+                ax.annotate('{}'.format(round(height, 4)),
+                            xy=(rect.get_x() + rect.get_width() / 2, height),
+                            xytext=(0, 3),  # 3 points vertical offset
+                            textcoords="offset points",
+                            ha='center', va='bottom')
+
+        autolabel(rects1)
+        autolabel(rects2)
+
+        fig.tight_layout()
+
+        plt.show()
+
+
+
 
 
 

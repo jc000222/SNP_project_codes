@@ -54,6 +54,9 @@ class EDARunner:
 
             print("Time Period:", time_period)
             print("Frequency:", frequency)
+
+
+        sns.set_theme(style='darkgrid')
         # Suppress specific warning from Matplotlib
         warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
@@ -94,7 +97,7 @@ class EDARunner:
             print(f'Plot saved as {file}')
         plt.show()
 
-    def autocorrelation(self, save_plot=False, file_path=None, Partial_plot=False, color=None):
+    def autocorrelation(self, save_plot=False, file_path=None, Partial_plot=False, color=None, lags=40):
         '''
         Plots the autocorrelation and partial autocorrelation functions of the time series.
 
@@ -107,14 +110,14 @@ class EDARunner:
         if Partial_plot:
             # Plot the partial autocorrelation
             fig, ax = plt.subplots(figsize=(15, 3))  # Ensure both plots have the same size
-            plot_acf(self.df[self.col_names[1]], lags=40, ax=ax,color=color)
-            ax.set_title(f'Partial Autocorrelation Plot - {self.data_name}.png')
+            plot_acf(self.df[self.col_names[1]], lags=lags, ax=ax,color=color)
+            ax.set_title(f'Partial Autocorrelation Plot - {self.data_name}')
             ax.grid(True)
         else:
             # Plot the autocorrelation
             fig, ax = plt.subplots(figsize=(15, 3))
             pd.plotting.autocorrelation_plot(self.df[self.col_names[1]], ax=ax,color=color)
-            ax.set_title(f'Autocorrelation Plot - {self.data_name}.png')
+            ax.set_title(f'Autocorrelation Plot - {self.data_name}')
             ax.set_ylim(-1, 1)  # Set y-axis limits
             ax.grid(True)
         
@@ -238,8 +241,6 @@ class MultiEDARunner:
         if Show_info:
             print("Columns:",df.columns)
             display(df.head())
-        # Suppress specific warning from Matplotlib
-        warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
     def pacf_threshold(self, nlags=40, threshold=0.5, save_plot=False, file_path=None):
         """
@@ -350,6 +351,8 @@ class MultiEDARunner:
         Returns:
         None. Displays or saves the overview plot.
         '''
+        # Suppress specific warning from Matplotlib
+        warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
         if columns is None:
             columns = self.df.columns[1:]  # Exclude Timestamp column
         else:

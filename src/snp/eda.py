@@ -131,7 +131,7 @@ class EDARunner:
         plt.show()
     
 
-    def overview(self, save_plot=False, Zoom_in=None, file_path=None, color=None):
+    def overview(self, save_plot=False, Zoom_in=None, file_path=None, color=None,figsize=(10,6)):
         '''
         Plots an overview of the synthetic time series.
 
@@ -145,7 +145,7 @@ class EDARunner:
         None. Displays the overview plot.
         '''
         # Plot the synthetic time series
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=figsize)
         
         if Zoom_in:
             plt.plot(self.df[self.col_names[0]][Zoom_in[0]:Zoom_in[1]], self.df[self.col_names[1]][Zoom_in[0]:Zoom_in[1]], label=f"{self.data_name} Time Series - Zoomed: {Zoom_in[0]} -- {Zoom_in[1]}", color=color)

@@ -1,71 +1,116 @@
-# SNP_project_codes
-Codes for S&amp;P intern project
+# SNP Project Codes
 
-# EDARunner: Exploratory Data Analysis Tool for Time Series Data
+## Project Overview
 
-## Overview
+This repository contains code for performing statistical or machine learning analyses as part of a research project for S&P. It includes scripts for direct linear analysis and results visualization.
 
-`EDARunner` is a Python class designed to perform exploratory data analysis (EDA) on time series data. It provides various methods to visualize and analyze the data, including histogram, boxplot, autocorrelation, partial autocorrelation, overview, and time series decomposition plots.
-
-## Installation
-
-To install the package from the GitHub repository, use the following command:
+## Installation Instructions
 
 ```bash
-pip install --upgrade git+https://github.com/jc000222/SNP_project_codes.git
+git clone https://github.com/jc000222/SNP_project_codes.git
+
+cd SNP_project_codes
 ```
+## Instructions to set up a virtual environment (optional but recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+pip install -r requirements.txt
 
-# Functions
-### __init__(self, df, data_name, Show_info=True)
-Initialize EDARunner class with the input DataFrame. Make columns to "Timestamp", "Values".
+## File Structure
+- /src/: Source code for the project.
+- snp/dlinear_analysis.py: Script for performing direct linear analysis on SNP data.
+- snp/eda.py: Python class designed to perform exploratory data analysis (EDA) on time series data.
+- /data/: Directory for storing datasets (if applicable).
+- /reports/: Directory for output results including plots and processed data files.
 
-Args:
-df (DataFrame): Input DataFrame for analysis.
-data_name (str): The name of the dataset.
-Show_info (Boolean): Default as True. Show the info of df.
+## Exploratory Data Analysis (EDA)
+The EDA process is facilitated by the `EDARunner` class, which offers the following functionalities for comprehensive data analysis:
 
-### histogram(self)
-Plots a histogram of the values in the DataFrame.
+````Class `EDARunner````
 
-Returns: None
-### boxplot(self)
-Plots a boxplot of the values in the DataFrame.
+**Initialization:**
 
-Returns: None
-### autocorrelation(self)
-Plots the autocorrelation and partial autocorrelation functions of the time series.
+init(self, df, data_name, Show_info=True)
 
-Returns: None. Displays the autocorrelation and partial autocorrelation plots.
-### overview(self, Zoom_in=None)
-Plots an overview of the synthetic time series.
+**Parameters:**
+- df (DataFrame): Input DataFrame for analysis.
+- data_name (str): The name of the dataset.
+- Show_info (Boolean): Default as True. Shows the info of the DataFrame upon initialization.
+- Purpose: Initializes the EDARunner class with the input DataFrame, setting columns to “Timestamp” and “Values”.
 
-Parameters:
-Zoom_in: tuple (start_index, end_index) to specify the range of data points to zoom in on. If None, plots the entire series.
-Returns: None. Displays the overview plot.
-### plot_decomposition(self)
-Plots the individual components and the combined series of a time series decomposition.
+### **Methods:**
 
-Returns: None. Displays the decomposition plot.
+**1. histogram(self):** Plots a histogram of the values in the DataFrame.
+- Returns: None
 
-# Installation and Update Instructions
-### Installing the Package
+**2. boxplot(self):** Plots a boxplot of the values in the DataFrame.
+- Returns: None
 
-To install your package from a GitHub repository, use the following command:
+**3. autocorrelation(self):** Plots the autocorrelation and partial autocorrelation functions of the time series.
+- Returns: None.
 
-pip install git+https://github.com/jc000222/SNP_project_codes.git
+**4. overview(self, Zoom_in=None):** Provides an overview of the synthetic time series.
 
-This command fetches the latest version of the package from the repository and installs it.
+- **Parameters:**
+Zoom_in: Tuple (start_index, end_index) to specify the range of data points to zoom in on. If None, plots the entire series.
 
-### Updating the Package
+**5. plot_decomposition(self):** Plots the individual components and the combined series of a time series decomposition.
 
-To update the package to the latest version from the repository, you can use the --upgrade flag:
+Usage Example:
+python src/eda/edarunner_analysis.py
 
-pip install --upgrade git+https://github.com/jc000222/SNP_project_codes.git
+## Data Pipeline
+The `DLinearDataPipeline` class is equipped with methods to handle data extraction, preprocessing, and analysis. It supports various functionalities, from handling zip files to generating and analyzing reports.
 
-### Restarting the Environment
+### Initialization Parameters:
 
-After installing or updating a package, it's often necessary to restart the Python environment to ensure that the changes take effect. This can be particularly important in environments like Jupyter notebooks. If update is not working, try:
-pip uninstall snp
-and try install again.
+- **model_name**: Name of the model to use.
+- **seq_len**: Sequence length for the model.
+- **pred_lens**: List of prediction lengths.
+- **batch_size**: Batch size for training.
+- **learning_rate**: Learning rate for training.
+- **feature**: Feature type for the model ('S' for univariate, 'M' for multivariate).
 
+### Key Methods:
 
+- **extract_zip(file_path)**: Extracts zip files to a specified directory.
+- **create_sh_file(...)**: Generates shell scripts for model training.
+- **run_sh_file(sh_file_path)**: Executes shell scripts.
+- **extract_metrics_and_params(log_file_path)**: Extracts metrics and parameters from log files.
+- **preprocess_and_train(folder_net)**: Preprocesses data, runs training scripts, and collects metrics.
+- **perform_analysis(reports_directory)**: Analyzes aggregated reports and generates plots.
+
+## Using the DLinearDataPipeline Class
+
+To use the `DLinearDataPipeline` class, you need to initialize it with specific parameters that define the behavior and functionality of the model training and data processing. Below is an example of how to initialize and use this class in your code.
+
+### Initialization Example
+```
+python
+
+from your_module import DLinearDataPipeline
+
+## Create an instance of the DLinearDataPipeline class
+pipeline = DLinearDataPipeline(
+    model_name='DLinear',     # Specify the model name
+    seq_len=336,              # Define the sequence length
+    pred_lens=[24, 48, 96],   # List of prediction lengths
+    batch_size=32,            # Set the batch size for training
+    learning_rate=0.005,      # Set the learning rate
+    feature='M'               # Choose 'S' for univariate or 'M' for multivariate features
+)
+```
+### Contributing
+To contribute to this project:
+
+1. Fork the repository.
+2. Create a feature branch (git checkout -b feature_branch).
+3. Commit your changes (git commit -am 'Add some feature').
+4. Push to the branch (git push origin feature_branch).
+5. Create a new Pull Request.
+
+### Model Training
+The models are trained using scripts generated by the `DlinearDataPipeline` class. This process is automated by shell scripts that can be customized and executed to fit different datasets and model configurations.
+
+### License
+This project is licensed under the MIT License. See the LICENSE file for details.

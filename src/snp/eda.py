@@ -7,6 +7,9 @@ import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf
 from statsmodels.tsa.stattools import pacf
 from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.stattools import adfuller
+from scipy.signal import detrend
+from pandas.plotting import lag_plot
 import matplotlib.dates as mdates
 from datetime import datetime
 import pandas as pd
@@ -31,7 +34,9 @@ class EDARunner:
         """
         self.col_names = col_names
         df.columns = col_names
-        df[self.col_names[0]] = pd.to_datetime(df[self.col_names[0]])
+        
+        df.loc[:, self.col_names[0]] = pd.to_datetime(df[self.col_names[0]])
+
         self.df = df
         self.data_name = data_name
         self.default_file_path = f'/EDA_Result/{data_name}'
@@ -45,7 +50,6 @@ class EDARunner:
             display(df.info())
             display(df.describe())
             display(df.head())
-            df.sort_values(by=self.col_names[0], inplace=True)
             # Infer the frequency of the time series
             frequency = pd.infer_freq(df[self.col_names[0]])
 
@@ -60,22 +64,58 @@ class EDARunner:
         # Suppress specific warning from Matplotlib
         warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
+    def stationary(self, method):
+        # Make a copy of the dataframe to avoid modifying the original
+        df = self.df.copy()
 
-    def histogram(self, save_plot=False, file_path=None, color=None):
+        if method == "log_diff":
+            # Perform log transformation
+            df[self.col_names[1]] = np.log(df[self.col_names[1]] + 5)
+            # Difference the transformed series and drop NA values
+            df[self.col_names[1]] = df[self.col_names[1]].diff().dropna()
+            df = df.iloc[1:]
+        
+        elif method == "polynomial":
+            df[self.col_names[1]] = detrend(df[self.col_names[1]])
+        
+        elif method == "decomposition":
+            # Perform seasonal decomposition
+            result = seasonal_decompose(df[self.col_names[1]], model='additive', period=2)  # Adjust the period based on your data
+            # Detrend by subtracting the trend component from the original series
+            df[self.col_names[1]] = df[self.col_names[1]].sub(result.trend, fill_value=0)
+            df = df.iloc[:-1]
+        else:
+            raise ValueError("Method must be one of 'log_diff', 'polynomial', or 'decomposition'")
+        
+        # Perform ADF test
+        adf_result = adfuller(df[self.col_names[1]].dropna())
+        
+        # Print ADF test results
+        print(self.data_name)
+        print('ADF Statistic:', adf_result[0])
+        print('p-value:', adf_result[1])
+        print('Critical Values:')
+        for key, value in adf_result[4].items():
+            print(f'\t{key}: {value}')
+        
+        # Update self.df with the transformed dataframe
+        self.df = df
+
+    def histogram(self, save_plot=False, file_path=None, color=None, bins=50):
         '''
         Plots a histogram of the values in the DataFrame.
         '''
         plt.figure(figsize=(5, 3))
-        sns.histplot(self.df[self.col_names[1]], bins=50, kde=True, color=color)
+        sns.histplot(self.df[self.col_names[1]], bins=bins, kde=True, color=color)
         plt.title(f'Histogram of {self.col_names[1]}s for {self.data_name}')
         plt.xlabel(f'{self.col_names[1]}s')
         plt.ylabel('Frequency')
 
         if save_plot:
-            if file_path == None:
+            if file_path is None:
                 file_path = self.default_file_path
             os.makedirs(file_path, exist_ok=True)
-            file = file_path + f"/histogram_{self.data_name}.png"
+            file = os.path.join(file_path, f"histogram_{self.data_name}.png")
             plt.savefig(file)
             print(f'Plot saved to {file}')
         plt.show()
@@ -130,6 +170,11 @@ class EDARunner:
             print(f'Plot saved as {file}')
         plt.show()
     
+    def lag_plot(self):
+        lag_plot(self.df[self.col_names[1]])
+        plt.title(f"Lag plot for {self.data_name}")
+        plt.show()
+
 
     def overview(self, save_plot=False, Zoom_in=None, file_path=None, color=None,figsize=(10,6)):
         '''
@@ -186,7 +231,7 @@ class EDARunner:
         None. Displays the decomposition plot.
         '''
         # Decompose the time series data into its components: observed, trend, seasonal, and residual
-        decomposition = seasonal_decompose(self.df[self.col_names[1]], model='additive', period=365)
+        decomposition = seasonal_decompose(self.df[self.col_names[1]], model='additive', period=24*365)
 
         # Create a figure with 4 subplots, one for each component
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(15, 12))

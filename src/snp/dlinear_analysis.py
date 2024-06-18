@@ -1,3 +1,4 @@
+import ast
 import os
 import zipfile
 import pandas as pd
@@ -9,15 +10,17 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import platform
 import seaborn as sns
+from data_provider.data_factory import data_dict
+from data_provider.data_loader import Dataset_Custom
 
-class DLinearDataPipeline:
+class DataPipeline:
     def __init__(self,
                  model_name='DLinear',
                  seq_len=336,
-                 pred_lens=[24, 48, 96],
+                 pred_lens=[24, 48, 96, 192, 336, 720],
                  batch_size=32,
                  learning_rate=0.005,
-                 feature='M'):
+                 feature='S'):
         """
         This class defines a data processing pipeline that handles data extraction,
         preprocessing, training, and analysis for time series models. It supports
@@ -55,6 +58,49 @@ class DLinearDataPipeline:
             zip_ref.extractall(extract_to)
         print(f"Extracted {file_path} to {extract_to}")
 
+    def update_python_dict_file(self, file_path):
+        """
+        Append a new key-value pair to a dictionary in a Python file if it does not already exist.
+        This uses a templating approach to ensure class references are added correctly.
+
+        Args:
+        file_path (str): Path to the Python file where the dictionary is defined.
+        """
+        # Read the content of the file
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        # Prepare the new dictionary content
+        dict_entries = []
+        for k, v in data_dict.items():
+            # Assuming v is a class or a class instance, get its name for proper referencing
+            class_name = v.__name__ if hasattr(v, '__name__') else repr(v)
+            dict_entries.append(f"'{k}': {class_name}")
+
+        # Join all entries to form the dictionary string
+        dict_content = ',\n    '.join(dict_entries)
+
+        # Replace or append the updated dictionary in the file
+        with open(file_path, 'w') as file:
+            dictionary_found = False
+            in_dict_definition = False
+            for line in lines:
+                if re.match(r'^\s*data_dict\s*=\s*{', line):
+                    # Write the updated dictionary
+                    file.write(f"data_dict = {{\n    {dict_content}\n}}\n")
+                    dictionary_found = True
+                    in_dict_definition = True
+                    continue
+                elif in_dict_definition:
+                    # Check for the closing brace of the dictionary
+                    if '}' in line:
+                        in_dict_definition = False
+                    continue  
+                file.write(line)
+            # If the dictionary definition was not found, append it at the end
+            if not dictionary_found:
+                file.write(f"data_dict = {{\n    {dict_content}\n}}\n")
+
     def create_sh_file(self,
                        folder_name,
                        dataset_name,
@@ -83,6 +129,11 @@ class DLinearDataPipeline:
         Returns:
             str: Path to the created shell script.
         """
+        data_dict[dataset_name.split('.')[0]] = Dataset_Custom
+        print(data_dict.keys(), data_dict.values())
+        print(os.getcwd())
+        file_path = './data_provider/data_factory.py'
+        self.update_python_dict_file(file_path)
         current_directory = os.getcwd()
         scripts_path = os.path.join(current_directory, 'scripts')
         if not os.path.exists(scripts_path):
@@ -117,7 +168,7 @@ class DLinearDataPipeline:
             sh_content += f"""
             python -u run_longExp.py \\
               --is_training 1 \\
-              --root_path ./dataset/{folder_name}/ \\
+              --root_path ./dataset/ \\
               --data_path {dataset_name}.csv \\
               --model_id {dataset_name}_{seq_len}_{pred_len} \\
               --model $model_name \\
@@ -198,7 +249,7 @@ class DLinearDataPipeline:
         print(f"Folder Name: {folder_name}")
         report = pd.DataFrame(columns=['model', 'dataset_type', 'test_mse', 'test_mae', 'seq_len', 'pred_len'])
 
-        for root, _, files in tqdm(os.walk(f'{dataset_dir}/{folder_name}')):
+        for root, _, files in tqdm(os.walk(f'{dataset_dir}')):
             for file in files:
                 if not file.endswith('.csv'):
                     continue
@@ -212,7 +263,10 @@ class DLinearDataPipeline:
                 # Clean column names
                 df.columns = df.columns.str.strip()
                 print(f"Cleaned columns: {df.columns}")
-                
+                df = df.rename(columns={
+                  'Value': 'OT',
+                  'Timestamp': 'date'
+                })
                 if 'date' not in df.columns:
                     raise ValueError(f"Multivariate data must contain a 'date' column. Columns available in {file}: {list(df.columns)}")
                 
@@ -345,11 +399,12 @@ class DLinearDataPipeline:
         self.preprocess_and_train(folder_name)
 
 if __name__ == '__main__':
-    zip_file_path = 'Benchmark_Datasets.zip'  # Replace with the path to your zip file
-    print(zip_file_path.split('.')[0])
-    pipeline = DLinearDataPipeline(feature='S')
+    zip_file_path = 'Dataset_Task1.zip'  # Replace with the path to your zip file
+    file_name = zip_file_path.split('.')[0]
+    pipeline = DataPipeline(feature='S')
     pipeline.main(zip_file_path)
 
+    # Uncomment below lines for analysis of reports
     # Perform Analysis on Reports
-    results = pipeline.perform_analysis('reports')
-    print(results)
+    # results = pipeline.perform_analysis('reports')
+    # print(results)

@@ -220,18 +220,21 @@ class EDARunner:
         plt.show()
 
 
-    def plot_decomposition(self, save_plot=False, file_path=None):
+    def plot_decomposition(self, save_plot=False, file_path=None, period=365, Zoom_in=None):
         '''
         Plots the individual components and the combined series of a time series decomposition.
 
         Parameters:
-        None
+        save_plot (bool): Whether to save the plot as a file.
+        file_path (str): The file path to save the plot.
+        period (int): The period for seasonal decomposition.
+        zoom_in (tuple): A tuple (start_index, end_index) to zoom in on the plot.
         
         Returns:
         None. Displays the decomposition plot.
         '''
         # Decompose the time series data into its components: observed, trend, seasonal, and residual
-        decomposition = seasonal_decompose(self.df[self.col_names[1]], model='additive', period=24*365)
+        decomposition = seasonal_decompose(self.df[self.col_names[1]], model='additive', period=period)
 
         # Create a figure with 4 subplots, one for each component
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(15, 12))
@@ -239,30 +242,50 @@ class EDARunner:
         # Set the title of the entire figure
         fig.suptitle(self.data_name, fontsize=16)
         
+            
+
+        # Define the slice of data to plot
+        if Zoom_in:
+            fig.suptitle(self.data_name+" Zoomed In", fontsize=16)
+            start, end = Zoom_in
+            observed = decomposition.observed.iloc[start:end]
+            trend = decomposition.trend.iloc[start:end]
+            seasonal = decomposition.seasonal.iloc[start:end]
+            resid = decomposition.resid.iloc[start:end]
+        else:
+            observed = decomposition.observed
+            trend = decomposition.trend
+            seasonal = decomposition.seasonal
+            resid = decomposition.resid
+
         # Plot the observed data
-        decomposition.observed.plot(ax=ax1, color=self.colors[0])
+        observed.plot(ax=ax1, color=self.colors[0])
         ax1.set_ylabel('Observed')
 
-        # Plot the seasonal component
-        decomposition.seasonal.plot(ax=ax3, color=self.colors[1])
-        ax3.set_ylabel('Seasonal')
-        
         # Plot the trend component
-        decomposition.trend.plot(ax=ax2, color=self.colors[2])
+        trend.plot(ax=ax2, color=self.colors[1])
         ax2.set_ylabel('Trend')
-        
+
+        # Plot the seasonal component
+        seasonal.plot(ax=ax3, color=self.colors[2])
+        ax3.set_ylabel('Seasonal')
+
         # Plot the residual component
-        decomposition.resid.plot(ax=ax4, color=self.colors[3])
+        resid.plot(ax=ax4, color=self.colors[3])
         ax4.set_ylabel('Residual')
-        
+
+        # Save the plot if requested
         if save_plot:
-            if file_path == None:
+            if file_path is None:
                 file_path = self.default_file_path
             os.makedirs(file_path, exist_ok=True)
-            file = file_path + f"/decomposition_{self.data_name}.png"
+            file = f"{file_path}/decomposition_{self.data_name}.png"
             plt.savefig(file)
             print(f'Plot saved as {file}')
+        
+        # Display the plot
         plt.show()
+
 
 
 

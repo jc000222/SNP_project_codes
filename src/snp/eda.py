@@ -64,39 +64,48 @@ class EDARunner:
         # Suppress specific warning from Matplotlib
         warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
-    def stationary(self, method):
+    def stationary(self, method, ADF_test=True):
         # Make a copy of the dataframe to avoid modifying the original
         df = self.df.copy()
 
         if method == "log_diff":
             # Perform log transformation
-            df[self.col_names[1]] = np.log(df[self.col_names[1]] + 5)
+            df[self.col_names[1]] = np.log(df[self.col_names[1]] + 10)
             # Difference the transformed series and drop NA values
             df[self.col_names[1]] = df[self.col_names[1]].diff().dropna()
             df = df.iloc[1:]
-        
-        elif method == "polynomial":
+        elif method == "log_second_diff":
+            # Perform log transformation
+            df[self.col_names[1]] = np.log(df[self.col_names[1]] + 10)
+            # Difference the transformed series and drop NA values
+            df[self.col_names[1]] = df[self.col_names[1]].diff().dropna()
+            df[self.col_names[1]] = df[self.col_names[1]].diff().dropna()
+            df = df.iloc[2:]
+
+        elif method == "linear":
             df[self.col_names[1]] = detrend(df[self.col_names[1]])
         
         elif method == "decomposition":
             # Perform seasonal decomposition
-            result = seasonal_decompose(df[self.col_names[1]], model='additive', period=2)  # Adjust the period based on your data
+            result = seasonal_decompose(df[self.col_names[1]], model='additive', period=100)  # Adjust the period based on your data
             # Detrend by subtracting the trend component from the original series
             df[self.col_names[1]] = df[self.col_names[1]].sub(result.trend, fill_value=0)
-            df = df.iloc[:-1]
+            # The trend component from decomposition has the last 100 value as nan due to the moving average function, remove nan values
+            df = df.iloc[100:-100]
         else:
-            raise ValueError("Method must be one of 'log_diff', 'polynomial', or 'decomposition'")
+            raise ValueError("Method must be one of 'log_diff', 'linear', 'log_second_diff', or 'decomposition'")
         
         # Perform ADF test
         adf_result = adfuller(df[self.col_names[1]].dropna())
         
         # Print ADF test results
-        print(self.data_name)
-        print('ADF Statistic:', adf_result[0])
-        print('p-value:', adf_result[1])
-        print('Critical Values:')
-        for key, value in adf_result[4].items():
-            print(f'\t{key}: {value}')
+        if ADF_test:
+            print(self.data_name)
+            print('ADF Statistic:', adf_result[0])
+            print('p-value:', adf_result[1])
+            print('Critical Values:')
+            for key, value in adf_result[4].items():
+                print(f'\t{key}: {value}')
         
         # Update self.df with the transformed dataframe
         self.df = df
@@ -171,10 +180,14 @@ class EDARunner:
         plt.show()
     
     def lag_plot(self):
-        lag_plot(self.df[self.col_names[1]])
+        lag_plot(self.df[self.col_names[1]],alpha = 0.7)
         plt.title(f"Lag plot for {self.data_name}")
         plt.show()
 
+    def autocorrelation_lag1(self):
+        return (self.df[self.col_names[1]].autocorr(lag=1))
+    def autocorrelation_lag2(self):
+        return (self.df[self.col_names[1]].autocorr(lag=2))
 
     def overview(self, save_plot=False, Zoom_in=None, file_path=None, color=None,figsize=(10,6)):
         '''

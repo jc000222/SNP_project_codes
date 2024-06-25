@@ -4,7 +4,7 @@ eda.py contains a EDARunner class to perform EDA.
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
-from statsmodels.graphics.tsaplots import plot_acf
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.stattools import pacf
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.stattools import adfuller
@@ -15,6 +15,8 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import warnings
+
+import scipy.stats as stats
 
 
 class EDARunner:
@@ -159,15 +161,14 @@ class EDARunner:
         if Partial_plot:
             # Plot the partial autocorrelation
             fig, ax = plt.subplots(figsize=(15, 3))  # Ensure both plots have the same size
-            plot_acf(self.df[self.col_names[1]], lags=lags, ax=ax,color=color)
+            plot_pacf(self.df[self.col_names[1]], lags=lags, ax=ax,color=color)
             ax.set_title(f'Partial Autocorrelation Plot - {self.data_name}')
             ax.grid(True)
         else:
-            # Plot the autocorrelation
-            fig, ax = plt.subplots(figsize=(15, 3))
-            pd.plotting.autocorrelation_plot(self.df[self.col_names[1]], ax=ax,color=color)
-            ax.set_title(f'Autocorrelation Plot - {self.data_name}')
-            ax.set_ylim(-1, 1)  # Set y-axis limits
+            # Plot the partial autocorrelation
+            fig, ax = plt.subplots(figsize=(15, 3))  # Ensure both plots have the same size
+            plot_acf(self.df[self.col_names[1]], lags=lags, ax=ax,color=color)
+            ax.set_title(f'Partial Autocorrelation Plot - {self.data_name}')
             ax.grid(True)
         
         if save_plot:
@@ -183,6 +184,24 @@ class EDARunner:
         lag_plot(self.df[self.col_names[1]],alpha = 0.7)
         plt.title(f"Lag plot for {self.data_name}")
         plt.show()
+    def autocorr_with_confidence_interval(self, lag=1, confidence_level=0.95):
+        # Calculate the autocorrelation coefficient at the specified lag
+        autocorr_value = self.df[self.col_names[1]].autocorr(lag=lag)
+        
+        # Number of observations
+        N = len(self.df[self.col_names[1]])
+        
+        # Standard error of the autocorrelation
+        standard_error = 1 / np.sqrt(N)
+        
+        # Z-score for the specified confidence level
+        z_score = stats.norm.ppf(1 - (1 - confidence_level) / 2)
+        
+        # Confidence interval bounds
+        ci_lower = autocorr_value - z_score * standard_error
+        ci_upper = autocorr_value + z_score * standard_error
+        
+        return autocorr_value, (ci_lower, ci_upper)
 
     def autocorrelation_lag1(self):
         return (self.df[self.col_names[1]].autocorr(lag=1))
